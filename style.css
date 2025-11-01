@@ -93,9 +93,16 @@ footer {
   color: #444;
 }
 
+#hp-title {
+  width: 100%;
+  max-width: 300px;
+  height: auto;
+  display: block;
+  margi
+
 #discord {
   width: 100%;
-  max-width: 300px; /* or whatever size looks good on desktop */
+  max-width: 300px;
   height: auto;
   display: block;
   margin: 0 auto;
