@@ -18,7 +18,7 @@ async function loadRandomPanel() {
 	const arcNames = shuffleArray(Object.keys(data.Arcs));
     const datalist = document.getElementById("arc-list");
     datalist.innerHTML = ""; // Clear previous options
-	console.log(arcNames)
+	
     arcNames.forEach(arc => {
       const option = document.createElement("option");
       option.value = arc;
