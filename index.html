@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+	<title>PanelGuessr</title>
+	<link rel="stylesheet" href="style.css" />
+	<link rel="preconnect" href="https://fonts.googleapis.com">
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+	<link href="https://fonts.googleapis.com/css2?family=Rubik+Spray+Paint&display=swap" rel="stylesheet">
+</head>
+<body>
+	<div class="wrapper">
+		<div class="title">
+			<img src="img/titlecomic-new-smaller.png" width="25%">
+			<h1>Guess the Arc!</h1>
+		</div>
+		<div id="game">
+			<img id="panel-image" src="" alt="Webcomic panel" /><br>
+			<input type="text" id="guess-input" list="arc-list" placeholder="Enter arc name..." />
+			<datalist id="arc-list">
+			</datalist>
+			<button id="submit-btn">Guess</button>
+			<p id="feedback"></p>
+			<b><p id="streak"></p></b>
+		</div>
+	 </div>
+	 <div>
+		<a href="https://discord.gg/UyjudhY">
+			<img id="discord" src="img/OUHP-banner.png" alt="Join us!"  width="25%"/>
+		</a>
+	</div>
+	<footer>
+		<p>
+			Panels from <em>Housepets!</em> © Rick Griffin. All rights reserved. Used under fair use for non-commercial purposes.
+		</p>
+	</footer>
+	<script src="script.js"></script>
+</body>
+</html>
