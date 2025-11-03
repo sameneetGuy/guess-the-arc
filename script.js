@@ -1,6 +1,7 @@
 let currentAnswer = "Imaginate";
 let currentImage = "";
 let streak = localStorage.getItem("streak") || 0;
+let topScores = JSON.parse(localStorage.getItem("topScores")) || [0, 0, 0];
 
 function shuffleArray(array) {
   for (let i = array.length - 1; i > 0; i--) {
@@ -41,6 +42,16 @@ async function loadRandomPanel() {
     // Update the image and streak
     document.getElementById("panel-image").src = currentImage;
     document.getElementById("streak").textContent = `Streak: ${streak}`;
+	
+	// Update Top Scores
+	const medalIcons = ["🥇", "🥈", "🥉"];
+	let scoreDisplay = "<strong>Top Scores:</strong><br>";
+
+	topScores.forEach((score, index) => {
+	  scoreDisplay += `${medalIcons[index]} ${score}<br>`;
+	});
+
+	document.getElementById("top-scores").innerHTML = scoreDisplay;
   } catch (error) {
     console.error("Error loading panel data:", error);
     document.getElementById("game").innerHTML = "<p>Failed to load panel data.</p>";
@@ -58,16 +69,38 @@ document.getElementById("submit-btn").addEventListener("click", () => {
     localStorage.setItem("streak", streak);
   } else {
     document.getElementById("feedback").textContent = "Try again!";
+	
+	// Add current streak to the list
+	topScores.push(streak);
+
+	// Sort and keep only top 3
+	topScores = topScores.sort((a, b) => b - a).slice(0, 3);
+
+	// Save back to localStorage
+	localStorage.setItem("topScores", JSON.stringify(topScores));
+
+	// Reset the Streak
     streak = 0;
     localStorage.setItem("streak", streak);
   }
 
-  document.getElementById("streak").textContent = `Streak: ${streak}`;
-  document.getElementById("guess-input").value = ""; // Clear input
-  setTimeout(() => {
-    document.getElementById("feedback").textContent = ""; // Clear feedback
-    loadRandomPanel(); // Load a new panel
-  }, 1500); // Delay to let user see feedback
+	document.getElementById("streak").textContent = `Streak: ${streak}`;
+
+	// Update Top Scores
+	const medalIcons = ["🥇", "🥈", "🥉"];
+	let scoreDisplay = "<strong>Top Scores:</strong><br>";
+
+	topScores.forEach((score, index) => {
+	  scoreDisplay += `${medalIcons[index]} ${score}<br>`;
+	});
+
+	document.getElementById("top-scores").innerHTML = scoreDisplay;
+  
+	document.getElementById("guess-input").value = ""; // Clear input
+	setTimeout(() => {
+		document.getElementById("feedback").textContent = ""; // Clear feedback
+		loadRandomPanel(); // Load a new panel
+	}, 1500); // Delay to let user see feedback
 });
 
 loadRandomPanel();
