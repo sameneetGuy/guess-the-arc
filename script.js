@@ -15,22 +15,30 @@ async function loadRandomPanel() {
     const res = await fetch("data/panels.json");
     const data = await res.json();
 
-	const arcNames = shuffleArray(Object.keys(data.Arcs));
+    const allArcNames = Object.keys(data.Arcs);
+
+    // Pick a random arc for the correct answer
+    const randomArcIndex = Math.floor(Math.random() * allArcNames.length);
+    currentAnswer = allArcNames[randomArcIndex];
+
+    // Pick a random panel from that arc
+    const arcPanels = data.Arcs[currentAnswer];
+    const randomPanelIndex = Math.floor(Math.random() * arcPanels.length);
+    currentImage = arcPanels[randomPanelIndex];
+
+    // Shuffle arc names for display
+    const shuffledArcNames = shuffleArray([...allArcNames]);
+
+    // Populate the datalist
     const datalist = document.getElementById("arc-list");
-    datalist.innerHTML = ""; // Clear previous options
-	
-    arcNames.forEach(arc => {
+    datalist.innerHTML = "";
+    shuffledArcNames.forEach(arc => {
       const option = document.createElement("option");
       option.value = arc;
       datalist.appendChild(option);
     });
 
-    // Pick a random arc and panel
-    currentAnswer = arcNames[0]; // or randomize if you add more arcs
-    const arcPanels = data.Arcs[currentAnswer];
-    const randomIndex = Math.floor(Math.random() * arcPanels.length);
-    currentImage = arcPanels[randomIndex];
-
+    // Update the image and streak
     document.getElementById("panel-image").src = currentImage;
     document.getElementById("streak").textContent = `Streak: ${streak}`;
   } catch (error) {
@@ -38,6 +46,7 @@ async function loadRandomPanel() {
     document.getElementById("game").innerHTML = "<p>Failed to load panel data.</p>";
   }
 }
+
 
 document.getElementById("submit-btn").addEventListener("click", () => {
   const guess = document.getElementById("guess-input").value.trim().toLowerCase();
