@@ -11,40 +11,36 @@ function shuffleArray(array) {
   return array;
 }
 
-async function loadRandomPanel() {
+async function loadRandomPanel(dontShowSpot) {
   try {
     const res = await fetch("data/panels.json");
     const data = await res.json();
 	const spotArcs = Object.entries(data.ArcTags)
-	  .filter(([arcName, tags]) => tags.includes("Spot"))
+	  .filter(([arcName, tags]) => !tags.includes("Spot"))
 	  .map(([arcName]) => arcName);
 
-	document.getElementById("filter-spot").addEventListener("change", (e) => {
-		const showSpotOnly = e.target.checked;
-		const arcNames = showSpotOnly ? spotArcs : Object.keys(data.Arcs);
-		
-		// Pick a random arc for the correct answer
-		const randomArcIndex = Math.floor(Math.random() * arcNames.length);
-		currentAnswer = arcNames[randomArcIndex];
+	const arcNames = dontShowSpot;
+	
+	// Pick a random arc for the correct answer
+	const randomArcIndex = Math.floor(Math.random() * arcNames.length);
+	currentAnswer = arcNames[randomArcIndex];
 
-		// Pick a random panel from that arc
-		const arcPanels = data.Arcs[currentAnswer];
-		const randomPanelIndex = Math.floor(Math.random() * arcPanels.length);
-		currentImage = arcPanels[randomPanelIndex];
-		
-		// Shuffle arc names for display
-		const shuffledArcNames = shuffleArray([...arcNames]);
+	// Pick a random panel from that arc
+	const arcPanels = data.Arcs[currentAnswer];
+	const randomPanelIndex = Math.floor(Math.random() * arcPanels.length);
+	currentImage = arcPanels[randomPanelIndex];
+	
+	// Shuffle arc names for display
+	const shuffledArcNames = shuffleArray([...arcNames]);
 
-		// Update datalist
-		const datalist = document.getElementById("arc-list");
-		datalist.innerHTML = "";
-		shuffledArcNames.forEach(arc => {
-			const option = document.createElement("option");
-			option.value = arc;
-			datalist.appendChild(option);
-		});
+	// Update datalist
+	const datalist = document.getElementById("arc-list");
+	datalist.innerHTML = "";
+	shuffledArcNames.forEach(arc => {
+		const option = document.createElement("option");
+		option.value = arc;
+		datalist.appendChild(option);
 	});
-
 
     // Update the image and streak
     document.getElementById("panel-image").src = currentImage;
@@ -110,4 +106,17 @@ document.getElementById("submit-btn").addEventListener("click", () => {
 	}, 1500); // Delay to let user see feedback
 });
 
-loadRandomPanel();
+document.getElementById("filter-spot").addEventListener("change", (e) => {
+	const isChecked = e.target.checked;
+	localStorage.setItem("filterSpot", isChecked ? "true" : "false");
+	
+	loadRandomPanel(isChecked);
+});
+
+window.addEventListener("DOMContentLoaded", () => {
+  const savedState = localStorage.getItem("filterSpot") === "true";
+  spotCheckbox.checked = savedState;
+
+  // Apply the saved filter state
+  loadRandomPanel(savedState);
+});
