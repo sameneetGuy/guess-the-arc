@@ -2,6 +2,7 @@ let currentAnswer = "Imaginate";
 let currentImage = "";
 let streak = localStorage.getItem("streak") || 0;
 let topScores = JSON.parse(localStorage.getItem("topScores")) || [0, 0, 0];
+let filterSpot;
 
 function shuffleArray(array) {
   for (let i = array.length - 1; i > 0; i--) {
@@ -18,8 +19,9 @@ async function loadRandomPanel(dontShowSpot) {
 	const spotArcs = Object.entries(data.ArcTags)
 	  .filter(([arcName, tags]) => !tags.includes("Spot"))
 	  .map(([arcName]) => arcName);
-
-	const arcNames = dontShowSpot;
+	
+	filterSpot = dontShowSpot;
+	const arcNames = dontShowSpot ? spotArcs : Object.keys(data.Arcs);
 	
 	// Pick a random arc for the correct answer
 	const randomArcIndex = Math.floor(Math.random() * arcNames.length);
@@ -102,7 +104,7 @@ document.getElementById("submit-btn").addEventListener("click", () => {
 	document.getElementById("guess-input").value = ""; // Clear input
 	setTimeout(() => {
 		document.getElementById("feedback").textContent = ""; // Clear feedback
-		loadRandomPanel(); // Load a new panel
+		loadRandomPanel(filterSpot); // Load a new panel
 	}, 1500); // Delay to let user see feedback
 });
 
