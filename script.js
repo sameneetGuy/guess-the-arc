@@ -15,29 +15,36 @@ async function loadRandomPanel() {
   try {
     const res = await fetch("data/panels.json");
     const data = await res.json();
+	const spotArcs = Object.entries(data.ArcTags)
+	  .filter(([arcName, tags]) => tags.includes("Spot"))
+	  .map(([arcName]) => arcName);
 
-    const allArcNames = Object.keys(data.Arcs);
+	document.getElementById("filter-spot").addEventListener("change", (e) => {
+		const showSpotOnly = e.target.checked;
+		const arcNames = showSpotOnly ? spotArcs : Object.keys(data.Arcs);
+		
+		// Pick a random arc for the correct answer
+		const randomArcIndex = Math.floor(Math.random() * arcNames.length);
+		currentAnswer = arcNames[randomArcIndex];
 
-    // Pick a random arc for the correct answer
-    const randomArcIndex = Math.floor(Math.random() * allArcNames.length);
-    currentAnswer = allArcNames[randomArcIndex];
+		// Pick a random panel from that arc
+		const arcPanels = data.Arcs[currentAnswer];
+		const randomPanelIndex = Math.floor(Math.random() * arcPanels.length);
+		currentImage = arcPanels[randomPanelIndex];
+		
+		// Shuffle arc names for display
+		const shuffledArcNames = shuffleArray([...arcNames]);
 
-    // Pick a random panel from that arc
-    const arcPanels = data.Arcs[currentAnswer];
-    const randomPanelIndex = Math.floor(Math.random() * arcPanels.length);
-    currentImage = arcPanels[randomPanelIndex];
+		// Update datalist
+		const datalist = document.getElementById("arc-list");
+		datalist.innerHTML = "";
+		shuffledArcNames.forEach(arc => {
+			const option = document.createElement("option");
+			option.value = arc;
+			datalist.appendChild(option);
+		});
+	});
 
-    // Shuffle arc names for display
-    const shuffledArcNames = shuffleArray([...allArcNames]);
-
-    // Populate the datalist
-    const datalist = document.getElementById("arc-list");
-    datalist.innerHTML = "";
-    shuffledArcNames.forEach(arc => {
-      const option = document.createElement("option");
-      option.value = arc;
-      datalist.appendChild(option);
-    });
 
     // Update the image and streak
     document.getElementById("panel-image").src = currentImage;
