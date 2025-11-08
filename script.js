@@ -117,6 +117,7 @@ document.getElementById("filter-spot").addEventListener("change", (e) => {
 
 window.addEventListener("DOMContentLoaded", () => {
   const savedState = localStorage.getItem("filterSpot") === "true";
+  const spotCheckbox = document.getElementById("filter-spot");
   spotCheckbox.checked = savedState;
 
   // Apply the saved filter state
