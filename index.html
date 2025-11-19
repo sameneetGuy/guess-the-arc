@@ -1,11 +1,11 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-	<meta charset="UTF-8" />
-	<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-	<meta charset="utf-8">
-	<meta name="og:site_name" content="Housepets! Guess the Arc">
-	<meta name="og:description" content="A simple website for guessing Housepets! Arc from a single panel.">
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+        <meta name="description" content="Guess the Housepets! story arc from a single comic panel and keep your streak going." />
+        <meta name="og:site_name" content="Housepets! Guess the Arc">
+        <meta name="og:description" content="A simple website for guessing Housepets! Arc from a single panel.">
 	<meta name="og:image" content="https://sameneetguy.github.io/guess-the-arc/img/dspluddx.png">
 	<title>PanelGuesser</title>
 	<link rel="stylesheet" href="style.css" />
@@ -25,26 +25,29 @@
 		<li><a href="https://sameneetguy.github.io/housepets-charasort/">Character Sorter</a></li>
 	  </ul>
 	</nav>
-	<div class="wrapper">
-		<div class="title">
-			<img src="img/titlecomic-new-smaller.png" style="width: 100%; max-width: 500px; height: auto;">
-			<h1>Guess the Arc!</h1>
-		</div>
-		<div id="game">
-			<img id="panel-image" src="" alt="Webcomic panel" /><br>
-			<label>
-			  <input type="checkbox" id="filter-spot" />
-			  Don't show Spot-related arcs
-			</label>
-			<input type="text" id="guess-input" list="arc-list" placeholder="Enter arc name..." />
-			<datalist id="arc-list">
-			</datalist>
-			<button id="submit-btn">Guess</button>
-			<p id="feedback"></p>
-			<b><p id="streak"></p></b>
-			<p id="top-scores"></p>
-		</div>
-	 </div>
+        <div class="wrapper" role="main">
+                <div class="title">
+                        <img src="img/titlecomic-new-smaller.png" alt="Guess the Arc title banner" class="title-image">
+                        <h1>Guess the Arc!</h1>
+                </div>
+                <section id="game" aria-live="polite">
+                        <img id="panel-image" src="" alt="Webcomic panel" />
+                        <div class="filter-toggle">
+                          <input type="checkbox" id="filter-spot" />
+                          <label for="filter-spot">Don't show Spot-related arcs</label>
+                        </div>
+                        <form id="guess-form" novalidate>
+                                <label for="guess-input" class="sr-only">Arc name</label>
+                                <input type="text" id="guess-input" list="arc-list" placeholder="Enter arc name..." autocomplete="off" />
+                                <datalist id="arc-list"></datalist>
+                                <button id="submit-btn" type="submit">Guess</button>
+                        </form>
+                        <p id="feedback" role="status" aria-live="polite"></p>
+                        <button id="next-btn" type="button" class="secondary" hidden>Next panel</button>
+                        <b><p id="streak" aria-live="polite"></p></b>
+                        <p id="top-scores"></p>
+                </section>
+         </div>
 	 <div>
 		<a href="https://discord.gg/UyjudhY">
 			<img id="discord" src="img/server-banner.png" alt="Join us!" style="width: 100%; max-width: 500px; height: auto;">
