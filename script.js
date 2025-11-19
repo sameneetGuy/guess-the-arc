@@ -1,125 +1,181 @@
-let currentAnswer = "Imaginate";
-let currentImage = "";
-let streak = localStorage.getItem("streak") || 0;
-let topScores = JSON.parse(localStorage.getItem("topScores")) || [0, 0, 0];
-let filterSpot;
+const panelImage = document.getElementById("panel-image");
+const streakEl = document.getElementById("streak");
+const topScoresEl = document.getElementById("top-scores");
+const feedbackEl = document.getElementById("feedback");
+const guessInput = document.getElementById("guess-input");
+const guessForm = document.getElementById("guess-form");
+const nextButton = document.getElementById("next-btn");
+const filterCheckbox = document.getElementById("filter-spot");
+const datalist = document.getElementById("arc-list");
 
-function shuffleArray(array) {
-  for (let i = array.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [array[i], array[j]] = [array[j], array[i]];
+let panelsData = null;
+let nonSpotArcNames = [];
+let currentAnswer = "";
+let currentImage = "";
+let roundActive = false;
+let currentFilterSpot = localStorage.getItem("filterSpot") === "true";
+
+let streak = Number(localStorage.getItem("streak"));
+if (!Number.isFinite(streak) || streak < 0) {
+  streak = 0;
+}
+
+let topScores = JSON.parse(localStorage.getItem("topScores"));
+if (!Array.isArray(topScores)) {
+  topScores = [0, 0, 0];
+} else {
+  topScores = topScores
+    .map((score) => Number(score) || 0)
+    .sort((a, b) => b - a)
+    .slice(0, 3);
+  while (topScores.length < 3) {
+    topScores.push(0);
   }
-  return array;
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  filterCheckbox.checked = currentFilterSpot;
+  updateStreakDisplay();
+  renderTopScores();
+  loadRandomPanel(currentFilterSpot);
+});
+
+function updateStreakDisplay() {
+  streakEl.textContent = `Streak: ${streak}`;
+}
+
+function renderTopScores() {
+  const medalIcons = ["🥇", "🥈", "🥉"];
+  const entries = topScores
+    .slice(0, 3)
+    .map((score, index) => `${medalIcons[index]} ${score}`)
+    .join("<br>");
+
+  topScoresEl.innerHTML = `<strong>Top Scores:</strong><br>${entries}`;
+}
+
+function recordTopScore(score) {
+  if (score <= 0) return;
+  topScores = [...topScores, score]
+    .sort((a, b) => b - a)
+    .slice(0, 3);
+  localStorage.setItem("topScores", JSON.stringify(topScores));
+  renderTopScores();
+}
+
+async function ensurePanelsData() {
+  if (panelsData) return panelsData;
+
+  const response = await fetch("data/panels.json");
+  if (!response.ok) {
+    throw new Error(`Failed to load panel data (${response.status})`);
+  }
+
+  panelsData = await response.json();
+  if (panelsData?.ArcTags) {
+    nonSpotArcNames = Object.entries(panelsData.ArcTags)
+      .filter(([, tags]) => !tags.includes("Spot"))
+      .map(([arcName]) => arcName);
+  }
+  return panelsData;
+}
+
+function populateArcList(arcNames) {
+  datalist.innerHTML = "";
+  const shuffled = [...arcNames];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+
+  shuffled.forEach((arc) => {
+    const option = document.createElement("option");
+    option.value = arc;
+    datalist.appendChild(option);
+  });
 }
 
 async function loadRandomPanel(dontShowSpot) {
+  filterCheckbox.disabled = true;
+  guessInput.disabled = true;
+  nextButton.hidden = true;
+  feedbackEl.textContent = "Loading panel...";
+
   try {
-    const res = await fetch("data/panels.json");
-    const data = await res.json();
-	const spotArcs = Object.entries(data.ArcTags)
-	  .filter(([arcName, tags]) => !tags.includes("Spot"))
-	  .map(([arcName]) => arcName);
-	
-	filterSpot = dontShowSpot;
-	const arcNames = dontShowSpot ? spotArcs : Object.keys(data.Arcs);
-	
-	// Pick a random arc for the correct answer
-	const randomArcIndex = Math.floor(Math.random() * arcNames.length);
-	currentAnswer = arcNames[randomArcIndex];
+    const data = await ensurePanelsData();
+    currentFilterSpot = dontShowSpot;
+    localStorage.setItem("filterSpot", dontShowSpot ? "true" : "false");
 
-	// Pick a random panel from that arc
-	const arcPanels = data.Arcs[currentAnswer];
-	const randomPanelIndex = Math.floor(Math.random() * arcPanels.length);
-	currentImage = arcPanels[randomPanelIndex];
-	
-	// Shuffle arc names for display
-	const shuffledArcNames = shuffleArray([...arcNames]);
+    const arcNames = dontShowSpot ? nonSpotArcNames : Object.keys(data.Arcs);
+    if (!arcNames.length) {
+      throw new Error("No arcs available for the selected filter.");
+    }
 
-	// Update datalist
-	const datalist = document.getElementById("arc-list");
-	datalist.innerHTML = "";
-	shuffledArcNames.forEach(arc => {
-		const option = document.createElement("option");
-		option.value = arc;
-		datalist.appendChild(option);
-	});
+    populateArcList(arcNames);
 
-    // Update the image and streak
-    document.getElementById("panel-image").src = currentImage;
-    document.getElementById("streak").textContent = `Streak: ${streak}`;
-	
-	// Update Top Scores
-	const medalIcons = ["🥇", "🥈", "🥉"];
-	let scoreDisplay = "<strong>Top Scores:</strong><br>";
+    const randomArcIndex = Math.floor(Math.random() * arcNames.length);
+    currentAnswer = arcNames[randomArcIndex];
 
-	topScores.forEach((score, index) => {
-	  scoreDisplay += `${medalIcons[index]} ${score}<br>`;
-	});
+    const arcPanels = data.Arcs[currentAnswer];
+    const randomPanelIndex = Math.floor(Math.random() * arcPanels.length);
+    currentImage = arcPanels[randomPanelIndex];
 
-	document.getElementById("top-scores").innerHTML = scoreDisplay;
+    panelImage.src = currentImage;
+    feedbackEl.textContent = "";
+    guessInput.value = "";
+    guessInput.focus();
+    roundActive = true;
   } catch (error) {
-    console.error("Error loading panel data:", error);
-    document.getElementById("game").innerHTML = "<p>Failed to load panel data.</p>";
+    console.error(error);
+    feedbackEl.textContent = error.message || "Failed to load panel data.";
+    roundActive = false;
+    nextButton.hidden = false;
+  } finally {
+    filterCheckbox.disabled = false;
+    guessInput.disabled = false;
   }
 }
 
-
-document.getElementById("submit-btn").addEventListener("click", () => {
-  const guess = document.getElementById("guess-input").value.trim().toLowerCase();
-  const answer = currentAnswer.toLowerCase();
-
-  if (guess === answer) {
-    document.getElementById("feedback").textContent = "Correct!";
-    streak++;
-    localStorage.setItem("streak", streak);
-  } else {
-    document.getElementById("feedback").textContent = "Try again!";
-	
-	// Add current streak to the list
-	topScores.push(streak);
-
-	// Sort and keep only top 3
-	topScores = topScores.sort((a, b) => b - a).slice(0, 3);
-
-	// Save back to localStorage
-	localStorage.setItem("topScores", JSON.stringify(topScores));
-
-	// Reset the Streak
-    streak = 0;
-    localStorage.setItem("streak", streak);
+function handleGuess(event) {
+  event.preventDefault();
+  if (!roundActive) {
+    return;
   }
 
-	document.getElementById("streak").textContent = `Streak: ${streak}`;
+  const guess = guessInput.value.trim();
+  if (!guess) {
+    feedbackEl.textContent = "Please enter an arc name before guessing.";
+    return;
+  }
 
-	// Update Top Scores
-	const medalIcons = ["🥇", "🥈", "🥉"];
-	let scoreDisplay = "<strong>Top Scores:</strong><br>";
+  const normalizedGuess = guess.toLowerCase();
+  const normalizedAnswer = currentAnswer.toLowerCase();
 
-	topScores.forEach((score, index) => {
-	  scoreDisplay += `${medalIcons[index]} ${score}<br>`;
-	});
+  if (normalizedGuess === normalizedAnswer) {
+    streak += 1;
+    localStorage.setItem("streak", streak);
+    updateStreakDisplay();
+    feedbackEl.textContent = `Correct! That panel was from "${currentAnswer}".`;
+  } else {
+    feedbackEl.textContent = `Incorrect. It was "${currentAnswer}".`;
+    recordTopScore(streak);
+    streak = 0;
+    localStorage.setItem("streak", streak);
+    updateStreakDisplay();
+  }
 
-	document.getElementById("top-scores").innerHTML = scoreDisplay;
-  
-	document.getElementById("guess-input").value = ""; // Clear input
-	setTimeout(() => {
-		document.getElementById("feedback").textContent = ""; // Clear feedback
-		loadRandomPanel(filterSpot); // Load a new panel
-	}, 1500); // Delay to let user see feedback
+  roundActive = false;
+  nextButton.hidden = false;
+  guessInput.blur();
+}
+
+guessForm.addEventListener("submit", handleGuess);
+
+nextButton.addEventListener("click", () => {
+  loadRandomPanel(currentFilterSpot);
 });
 
-document.getElementById("filter-spot").addEventListener("change", (e) => {
-	const isChecked = e.target.checked;
-	localStorage.setItem("filterSpot", isChecked ? "true" : "false");
-	
-	loadRandomPanel(isChecked);
-});
-
-window.addEventListener("DOMContentLoaded", () => {
-  const savedState = localStorage.getItem("filterSpot") === "true";
-  const spotCheckbox = document.getElementById("filter-spot");
-  spotCheckbox.checked = savedState;
-
-  // Apply the saved filter state
-  loadRandomPanel(savedState);
+filterCheckbox.addEventListener("change", (event) => {
+  const isChecked = event.target.checked;
+  loadRandomPanel(isChecked);
 });
