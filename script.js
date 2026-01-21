@@ -47,14 +47,18 @@ document.addEventListener("DOMContentLoaded", () => {
   loadRandomPanel(currentFilterSpot);
 });
 
-panelImage.onerror = () => {
-  feedbackEl.textContent = "Failed to load image. Please try another panel.";
-  roundActive = false;
-  nextButton.hidden = false;
-  submitButton.disabled = true;
-  guessInput.disabled = true;
-  nextButton.focus();
-};
+function handleImageError() {
+   feedbackEl.textContent = "Failed to load image. Please try another panel.";
+   roundActive = false;
+   nextButton.hidden = false;
+   submitButton.disabled = true;
+   guessInput.disabled = true;
+   if (!nextButton.hidden) {
+     nextButton.focus();
+   }
+ }
+ 
+ panelImage.onerror = handleImageError;
 
 function updateStreakDisplay() {
   streakEl.textContent = `Streak: ${streak}`;
@@ -204,7 +208,7 @@ filterCheckbox.addEventListener("change", (event) => {
 });
 
 document.addEventListener("keydown", (event) => {
-  if (event.key === "Enter" && !nextButton.hidden) {
+  if (event.key === "Enter" && !nextButton.hidden && document.activeElement !== guessInput) {
     event.preventDefault();
     nextButton.click();
   }
