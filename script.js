@@ -4,23 +4,30 @@ const topScoresEl = document.getElementById("top-scores");
 const feedbackEl = document.getElementById("feedback");
 const guessInput = document.getElementById("guess-input");
 const guessForm = document.getElementById("guess-form");
+const submitButton = document.getElementById("submit-btn");
 const nextButton = document.getElementById("next-btn");
 const filterCheckbox = document.getElementById("filter-spot");
 const datalist = document.getElementById("arc-list");
+
+const STORAGE_KEYS = {
+  STREAK: "streak",
+  TOP_SCORES: "topScores",
+  FILTER_SPOT: "filterSpot"
+};
 
 let panelsData = null;
 let nonSpotArcNames = [];
 let currentAnswer = "";
 let currentImage = "";
 let roundActive = false;
-let currentFilterSpot = localStorage.getItem("filterSpot") === "true";
+let currentFilterSpot = localStorage.getItem(STORAGE_KEYS.FILTER_SPOT) === "true";
 
-let streak = Number(localStorage.getItem("streak"));
+let streak = Number(localStorage.getItem(STORAGE_KEYS.STREAK));
 if (!Number.isFinite(streak) || streak < 0) {
   streak = 0;
 }
 
-let topScores = JSON.parse(localStorage.getItem("topScores"));
+let topScores = JSON.parse(localStorage.getItem(STORAGE_KEYS.TOP_SCORES));
 if (!Array.isArray(topScores)) {
   topScores = [0, 0, 0];
 } else {
@@ -39,6 +46,19 @@ document.addEventListener("DOMContentLoaded", () => {
   renderTopScores();
   loadRandomPanel(currentFilterSpot);
 });
+
+function handleImageError() {
+   feedbackEl.textContent = "Failed to load image. Please try another panel.";
+   roundActive = false;
+   nextButton.hidden = false;
+   submitButton.disabled = true;
+   guessInput.disabled = true;
+   if (!nextButton.hidden) {
+     nextButton.focus();
+   }
+ }
+ 
+ panelImage.onerror = handleImageError;
 
 function updateStreakDisplay() {
   streakEl.textContent = `Streak: ${streak}`;
@@ -59,7 +79,7 @@ function recordTopScore(score) {
   topScores = [...topScores, score]
     .sort((a, b) => b - a)
     .slice(0, 3);
-  localStorage.setItem("topScores", JSON.stringify(topScores));
+  localStorage.setItem(STORAGE_KEYS.TOP_SCORES, JSON.stringify(topScores));
   renderTopScores();
 }
 
@@ -104,7 +124,10 @@ async function loadRandomPanel(dontShowSpot) {
   try {
     const data = await ensurePanelsData();
     currentFilterSpot = dontShowSpot;
-    localStorage.setItem("filterSpot", dontShowSpot ? "true" : "false");
+    localStorage.setItem(
+      STORAGE_KEYS.FILTER_SPOT,
+      dontShowSpot ? "true" : "false"
+    );
 
     const arcNames = dontShowSpot ? nonSpotArcNames : Object.keys(data.Arcs);
     if (!arcNames.length) {
@@ -133,6 +156,7 @@ async function loadRandomPanel(dontShowSpot) {
   } finally {
     filterCheckbox.disabled = false;
     guessInput.disabled = false;
+    submitButton.disabled = false;
   }
 }
 
@@ -148,25 +172,28 @@ function handleGuess(event) {
     return;
   }
 
+  submitButton.disabled = true;
+  guessInput.disabled = true;
+
   const normalizedGuess = guess.toLowerCase();
   const normalizedAnswer = currentAnswer.toLowerCase();
 
   if (normalizedGuess === normalizedAnswer) {
     streak += 1;
-    localStorage.setItem("streak", streak);
+    localStorage.setItem(STORAGE_KEYS.STREAK, streak);
     updateStreakDisplay();
     feedbackEl.textContent = `Correct! That panel was from "${currentAnswer}".`;
   } else {
     feedbackEl.textContent = `Incorrect. It was "${currentAnswer}".`;
     recordTopScore(streak);
     streak = 0;
-    localStorage.setItem("streak", streak);
+    localStorage.setItem(STORAGE_KEYS.STREAK, streak);
     updateStreakDisplay();
   }
 
   roundActive = false;
   nextButton.hidden = false;
-  guessInput.blur();
+  nextButton.focus();
 }
 
 guessForm.addEventListener("submit", handleGuess);
@@ -178,4 +205,11 @@ nextButton.addEventListener("click", () => {
 filterCheckbox.addEventListener("change", (event) => {
   const isChecked = event.target.checked;
   loadRandomPanel(isChecked);
+});
+
+document.addEventListener("keydown", (event) => {
+  if (event.key === "Enter" && !nextButton.hidden && document.activeElement !== guessInput) {
+    event.preventDefault();
+    nextButton.click();
+  }
 });
